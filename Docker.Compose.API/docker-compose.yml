@@ -1,0 +1,39 @@
+services:
+  backend:
+    build: ./Docker.Compose.API
+    container_name: dotnet-docker-compose
+    ports:
+      - "8080:8080"
+    environment: 
+      - "ASPNETCORE_ENVIRONMENT=Development" # использование конфигурации из файла appsettings.Development.json
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:17-alpine
+    container_name: db-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=docker-compose-api
+    volumes:
+      - db_docker_compose_api:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s 
+      retries: 5
+      start_period: 30s
+      timeout: 10s 
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "5050:80"
+    container_name: pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.ru
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    depends_on:
+      - db
+
+volumes:
+  db_docker_compose_api:
